@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
 namespace BlogConsole{
     public class BloggingContext : DbContext{
         public DbSet<Blog> Blogs { get; set; }
@@ -9,9 +11,11 @@ namespace BlogConsole{
             this.SaveChanges();
         }
 
-        protected override void OnConfiguring(DbContextOptionsBilder optionsBuilder){
-            //remove from github
-            optionsBuilder.UseSqlServer();
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){
+            IConfiguration config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json",  true, true)
+                .Build();
+            optionsBuilder.UseSqlServer(@config["BloggingContext:ConnectionString"]);
         }
     }
 }
