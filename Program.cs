@@ -26,7 +26,7 @@ namespace BlogConsole
                         logger.Info("Option 1 selected");
 
                         var query = db.Blogs.OrderBy(b => b.Name);
-                        Console.WriteLine($"{db.Blogs.Count()} Blogs returned");
+                        Console.WriteLine($"{db.Blogs.Count()} Blog(s) returned");
                         foreach (var item in query){
                             Console.WriteLine(item.Name);
                         }
@@ -43,7 +43,55 @@ namespace BlogConsole
                         else
                             logger.Error("Blog name cannot be null");
                     }else if(input == "3"){
-                        
+                        logger.Info("Option 3 selected");
+
+                        //display blogs
+                        var query = db.Blogs.OrderBy(b => b.BlogId);
+                        Console.WriteLine("0) Posts from all blogs");
+                        foreach(var item in query){
+                            Console.WriteLine($"{item.BlogId}) Posts from {item.Name}");
+                        }
+                        int blogId;
+                        bool validCheck = int.TryParse(Console.ReadLine(), out blogId);
+                        if(validCheck){
+                            if(blogId == 0){
+                                //creates a joined query in order to pull the blog name from table
+                                //selects all posts
+                                var joinQuery = from p in db.Posts
+                                                join b in db.Blogs on p.BlogId equals b.BlogId
+                                                select new {
+                                                    BlogName = b.Name,
+                                                    PostTitle = p.Title,
+                                                    PostContent = p.Content
+                                                };
+                                Console.WriteLine($"{joinQuery.Count()} post(s) returned");
+                                foreach(var item in joinQuery){
+                                    Console.WriteLine($"Blog: {item.BlogName}\nTitle: {item.PostTitle}\nContent: {item.PostContent}\n");
+                                }
+                            }
+                            else{
+                                bool existCheck = db.Blogs.Any(b => b.BlogId == blogId);
+                                if(existCheck){
+                                    //selects all posts that match the blogId selected
+                                    var joinQuery = from p in db.Posts
+                                                join b in db.Blogs on p.BlogId equals b.BlogId
+                                                where p.BlogId == blogId
+                                                select new {
+                                                    BlogName = b.Name,
+                                                    PostTitle = p.Title,
+                                                    PostContent = p.Content
+                                                };
+                                    Console.WriteLine($"{joinQuery.Count()} post(s) returned");
+                                    foreach(var item in joinQuery){
+                                        Console.WriteLine($"Blog: {item.BlogName}\nTitle: {item.PostTitle}\nContent: {item.PostContent}\n");
+                                    }
+                                }
+                                else
+                                    logger.Error("There are no Blogs with that Id");
+                            }
+                        }
+                        else
+                            logger.Error("Invalid Blog Id");
                     }else if(input == "4"){
                         logger.Info("Option 4 selected");
                         
