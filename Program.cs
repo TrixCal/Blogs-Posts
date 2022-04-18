@@ -2,6 +2,8 @@
 using System.IO;
 using System.Linq;
 using NLog.Web;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogConsole
 {
@@ -34,14 +36,28 @@ namespace BlogConsole
                         logger.Info("Option 2 selected");
 
                         Console.Write("Enter a name for a new Blog: ");
-                        string name = Console.ReadLine();
-                        var blog = new Blog { Name = name };
-                        if(name != ""){
-                            db.AddBlog(blog);
-                            logger.Info($"Blog added - {name}");
+                        var blog = new Blog { Name = Console.ReadLine() };
+                        ValidationContext context = new ValidationContext(blog, null, null);
+                        List<ValidationResult> results = new List<ValidationResult>();
+
+                        var isValid = Validator.TryValidateObject(blog, context, results, true);
+                        if(isValid){
+                            //unique name
+                            if(db.Blogs.Any(b => b.Name == blog.Name)){
+                                isValid = false;
+                                results.Add(new ValidationResult("Blog name exists", new string[] {"Name"}));
+                            }
+                            else{
+                                logger.Info("Validation passed");
+                                db.AddBlog(blog);
+                                logger.Info($"Blog added - {blog.Name}");
+                            }
                         }
-                        else
-                            logger.Error("Blog name cannot be null");
+                        if(!isValid){
+                            foreach(var result in results){
+                                logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                            }
+                        }
                     }else if(input == "3"){
                         logger.Info("Option 3 selected");
 
